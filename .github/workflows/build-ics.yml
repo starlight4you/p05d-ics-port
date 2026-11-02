@@ -28,8 +28,8 @@ jobs:
         run: |
           mkdir -p ~/aosp
           cd ~/aosp
-          repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b android-4.0.4_r2.1 --no-clone-bundle --no-repo-verify
-          repo sync -j4 --no-clone-bundle
+          repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b android-4.0.4_r2.1 --no-repo-verify
+          repo sync -j4
 
       - name: Add device tree
         run: |
