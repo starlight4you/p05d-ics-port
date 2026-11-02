@@ -1,0 +1,20 @@
+{
+  "captured_files_sha256_verified": 704,
+  "denied_files": 9,
+  "product_copy_sources_verified": [
+    "input/omap-keypad.kl",
+    "input/twl4030_pwrbutton.kl",
+    "input/touchsensor.kl",
+    "input/Atmel_maXTouch_Touchscreen.idc",
+    "init.pana2_4a.rc",
+    "ueventd.pana2_4a.rc",
+    "media_profiles.xml"
+  ],
+  "root_access": "available via /system/xbin/su (CCS-patched kernel), not adb root",
+  "stock_init_captured": true,
+  "kernel_container_captured": "stock/partitions/kernel.img (CertISW, 20 MiB)"
+  "keylayout_duplicate_codes": 0,
+  "full_aosp_build": "not run",
+  "device_ics_boot": "not attempted",
+  "device_system_write": "none"
+}

@@ -1,0 +1,33 @@
+
+/dev/pvrsrvkm             0666   system     system
+/dev/video0               0660   system     camera
+/dev/video1               0660   system     camera
+/dev/video2               0660   system     camera
+/dev/s3c-jpg              0660   system     camera
+/dev/s3c-mem              0660   system     system
+/dev/s3c-mfc              0660   system     graphics
+/dev/block/mmcblk0p10     0660   system     system
+
+/dev/modem_ctl            0660   radio      radio
+/dev/modem_fmt            0660   radio      radio
+/dev/modem_rfs            0660   radio      radio
+/dev/s3c2410_serial3      0660   radio      radio
+/dev/block/mtdblock5      0660   radio      radio
+/dev/mtd/mtd5ro           0660   radio      radio
+/dev/hsi0                 0660   radio      radio
+
+# for Sensor HAL
+/dev/akm8973              0660   system     system
+/dev/accelerometer        0660   system     system
+
+# for GPS
+/dev/s3c2410_serial1      0600   gps        gps
+
+# for FeliCa
+/dev/felica               0600   felica     felica
+/dev/felica_cen           0644   fclock     system
+/dev/felica_pon           0200   felica     felica
+/dev/felica_rfs           0444   fclock     system
+/dev/felica_rws           0644   system     system
+/dev/felica_interrupt     0400   root       root
+/dev/felica_cfg           0600   fclock     system

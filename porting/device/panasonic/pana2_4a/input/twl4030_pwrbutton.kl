@@ -1,0 +1,2 @@
+# Stock omap-keypad.kl associates Linux KEY_POWER (116) with POWER.
+key 116 POWER WAKE

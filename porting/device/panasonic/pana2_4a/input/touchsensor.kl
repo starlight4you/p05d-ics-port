@@ -1,0 +1,4 @@
+# Physical key codes from stock mapping and live input capabilities.
+key 102 HOME WAKE_DROPPED
+key 139 MENU
+key 158 BACK

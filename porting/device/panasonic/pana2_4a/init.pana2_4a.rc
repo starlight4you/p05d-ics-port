@@ -1,0 +1,767 @@
+on init
+    # make directory for ccpu
+    mkdir /ccpu 0755 system system
+    mkdir /ccpu1 0755 system system
+
+    # Directory for chassis design colors
+    mkdir /tmp
+    mount tmpfs tmpfs /tmp size=128k
+    chown root system /tmp
+    chmod 0775 /tmp
+
+    # Directory for new log area
+    mkdir /log2 0755 root root
+    mount ext4 /dev/block/platform/mmci-omap-hs.1/by-name/log2 /log2 nosuid nodev
+    mkdir /log2/ccs 0755 root root
+    mkdir /log2/ccs/audit 0755 root root
+
+    # mount debugfs
+    mount debugfs /sys/kernel/debug /sys/kernel/debug
+
+# power management
+# Enable off mode by default
+    write /sys/kernel/debug/pm_debug/enable_off_mode 1
+
+# Enable Smart Reflex in debugfs
+    write /sys/kernel/debug/pm_debug/smartreflex/sr_core/autocomp 1
+    write /sys/kernel/debug/pm_debug/smartreflex/sr_iva/autocomp 1
+    write /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/autocomp 1
+
+on boot
+    chown system system /sys/class/leds/red/delay_on
+    chown system system /sys/class/leds/red/delay_off
+    chown system system /sys/class/leds/lcd-backlight/device/mode_set
+    chown system system /sys/class/leds/color/brightness
+
+    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+## Added by DTV
+    chown secureav system /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    chmod 0664 /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    chown secureav system /sys/devices/system/cpu/cpu1/online
+    chmod 0664 /sys/devices/system/cpu/cpu1/online
+
+    setprop ro.build.product omap4sdp
+    setprop ro.product.device omap4sdp
+    setprop ro.radio.noril yes
+
+# fake some battery state
+    setprop status.battery.state Slow
+    setprop status.battery.level 5
+    setprop status.battery.level_raw  50
+    setprop status.battery.level_scale 9
+
+# wi-fi
+    mkdir /data/misc/wifi/sockets 0770 wifi wifi
+    mkdir /data/misc/dhcp 0770 dhcp dhcp
+    copy /system/etc/wifi/nvs_map.bin /data/misc/wifi/nvs_map.bin
+
+# phone
+#    setprop ro.telephony.call_ring.multiple 0
+
+on fs
+    mount ext4 /dev/block/platform/mmci-omap-hs.1/by-name/system /system wait ro
+    mount ext4 /dev/block/platform/mmci-omap-hs.1/by-name/userdata /data wait noatime nosuid nodev
+    mount ext4 /dev/block/platform/mmci-omap-hs.1/by-name/cache /cache wait noatime nosuid nodev
+
+# create crashlog directory
+    mkdir /log/crashlog 770 system log
+
+# create tombstones and dropbox directory
+    mkdir /log2/tombstones 0770 system system
+    mkdir /log2/dropbox 0770 system system
+
+# create and mount misc4 directory.
+    mkdir /misc4 0700 root root
+    mount ext4 /dev/block/platform/mmci-omap-hs.1/by-name/sd /misc4 nosuid nodev
+    chown root root /misc4
+    chmod 0700 /misc4
+    mkdir /misc4/v 0700 root root
+    chown root root /misc4/v
+    chmod 0700 /misc4/v
+
+# permissions for bluetooth.
+#    chown bluetooth bluetooth ro.bt.bdaddr_path
+
+#service gpsd /system/vendor/bin/gpsd -c /vendor/etc/gps.xml
+#    socket gps seqpacket 0660 gps system
+#    user gps
+#    group system inet
+
+# create filesystems if necessary
+#service setup_fs /system/bin/setup_fs /dev/block/platform/s3c-sdhci.0/by-name/userdata
+#    user root
+#    group root
+#    oneshot
+
+# switch CPUfreq from performance to hotplug
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor hotplug
+    write /sys/devices/system/cpu/cpufreq/hotplug/down_threshold 30
+
+#Give system ownership and permission to boost clock for specified timeout
+#Note boost_timeout cannot be changed from application because of dynamic sysfs creation. It will have default value of 3 sec.
+    chown system system /sys/devices/system/cpu/cpu0/cpufreq/boost_cpufreq
+    chmod 0664  /sys/devices/system/cpu/cpu0/cpufreq/boost_cpufreq
+
+#Change permission for /sys/kernel/ entries for CTS test
+
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_errorgain
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_smpswaittimemin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_stepmin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_smpswaittimemax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_stepmax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_vddmax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_vddmin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/vp_timeout
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_mpu/fbb_enable
+
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_errorgain
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_smpswaittimemin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_stepmin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_smpswaittimemax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_stepmax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_vddmax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_vddmin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/vp_timeout
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_iva/fbb_enable
+
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_errorgain
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_smpswaittimemin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_stepmin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_smpswaittimemax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_stepmax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_vddmax
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_vddmin
+    chmod 0664 /sys/kernel/debug/pm_debug/voltage/vdd_core/vp_timeout
+   
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/autocomp
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/errweight
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/errmaxlimit
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_core/errminlimit
+  
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_iva/autocomp
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_iva/errweight
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_iva/errmaxlimit
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_iva/errminlimit
+ 
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/autocomp
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/errweight
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/errmaxlimit
+    chmod 0664 /sys/kernel/debug/pm_debug/smartreflex/sr_mpu/errminlimit
+
+    chmod 0664 /sys/kernel/debug/pm_debug/enable_off_mode
+    chmod 0664 /sys/kernel/debug/pm_debug/sleep_while_idle
+    chmod 0664 /sys/kernel/debug/pm_debug/wakeup_timer_seconds
+    chmod 0664 /sys/kernel/debug/pm_debug/wakeup_timer_milliseconds
+    chmod 0664 /sys/kernel/debug/pm_debug/enable_sr_vp_debug
+    chmod 0664 /sys/kernel/debug/pm_debug/pmd_clks_enable
+    chmod 0664 /sys/kernel/debug/pm_debug/dpll_cascade_enable
+ 
+    chmod 0664 /sys/kernel/debug/hsi/omap_hsi0/port1/counters 
+
+    chmod 0664 /sys/kernel/debug/omap_mux/jtag_tdo
+    chmod 0664 /sys/kernel/debug/omap_mux/jtag_tdi
+    chmod 0664 /sys/kernel/debug/omap_mux/jtag_tms_tmsc
+    chmod 0664 /sys/kernel/debug/omap_mux/jtag_rtck
+    chmod 0664 /sys/kernel/debug/omap_mux/jtag_tck
+    chmod 0664 /sys/kernel/debug/omap_mux/jtag_ntrst
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot7
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot6
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_pwron_reset_out
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_pwr_req
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_nreswarm
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_nrespwron
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_32k
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk4_out
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk4_req
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk3_out
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk3_req
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk0_out
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk_ioreq
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_slicer_in
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_xtal_in
+    chmod 0664 /sys/kernel/debug/omap_mux/sr_sda
+    chmod 0664 /sys/kernel/debug/omap_mux/sr_scl
+    chmod 0664 /sys/kernel/debug/omap_mux/sim_pwrctrl
+    chmod 0664 /sys/kernel/debug/omap_mux/sim_cd
+    chmod 0664 /sys/kernel/debug/omap_mux/sim_reset
+    chmod 0664 /sys/kernel/debug/omap_mux/sim_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/sim_io
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu19
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu18
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu17
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu16
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu15
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu14
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu13
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu12
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu11
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu10
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu9
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu8
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu7
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu6
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu5
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu4
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu3
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu2
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu1
+    chmod 0664 /sys/kernel/debug/omap_mux/dpm_emu0
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot5
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot4
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot3
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot2
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot1
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_boot0
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_nirq2
+    chmod 0664 /sys/kernel/debug/omap_mux/sys_nirq1
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk2_out
+    chmod 0664 /sys/kernel/debug/omap_mux/fref_clk1_out
+    chmod 0664 /sys/kernel/debug/omap_mux/usba0_otg_dm
+    chmod 0664 /sys/kernel/debug/omap_mux/usba0_otg_dp
+    chmod 0664 /sys/kernel/debug/omap_mux/usba0_otg_ce
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_row2
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_row1
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_row0
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_row5
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_row4
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_row3
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_col2
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_col1
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_col0
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_col5
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_col4
+    chmod 0664 /sys/kernel/debug/omap_mux/kpd_col3
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_hsic_strobe
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_hsic_data
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat7
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat6
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat5
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat4
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat3
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat2
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat1
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dat0
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_nxt
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_dir
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_stp
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb2_ulpitll_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/uart4_tx
+    chmod 0664 /sys/kernel/debug/omap_mux/uart4_rx
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi4_cs0
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi4_somi
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi4_simo
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi4_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc5_dat3
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc5_dat2
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc5_dat1
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc5_dat0
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc5_cmd
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc5_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/uart3_tx_irtx
+    chmod 0664 /sys/kernel/debug/omap_mux/uart3_rx_irrx
+    chmod 0664 /sys/kernel/debug/omap_mux/uart3_rts_sd
+    chmod 0664 /sys/kernel/debug/omap_mux/uart3_cts_rctx
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_cs3
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_cs2
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_cs1
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_cs0
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_simo
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_somi
+    chmod 0664 /sys/kernel/debug/omap_mux/mcspi1_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c4_sda
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c4_scl
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c3_sda
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c3_scl
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c2_sda
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c2_scl
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c1_sda
+    chmod 0664 /sys/kernel/debug/omap_mux/i2c1_scl
+    chmod 0664 /sys/kernel/debug/omap_mux/hdq_sio
+    chmod 0664 /sys/kernel/debug/omap_mux/uart2_tx
+    chmod 0664 /sys/kernel/debug/omap_mux/uart2_rx
+    chmod 0664 /sys/kernel/debug/omap_mux/uart2_rts
+    chmod 0664 /sys/kernel/debug/omap_mux/uart2_cts
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_dmic_din3
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_dmic_din2
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_dmic_din1
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_dmic_clk1
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_clks
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_pdm_lb_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_pdm_frame
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_pdm_dl_data
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_pdm_ul_data
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp1_fsx
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp1_dx
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp1_dr
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp1_clkx
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp2_fsx
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp2_dx
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp2_dr
+    chmod 0664 /sys/kernel/debug/omap_mux/abe_mcbsp2_clkx
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat7
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat6
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat5
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat4
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat3
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat2
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat1
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_dat0
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_cmd
+    chmod 0664 /sys/kernel/debug/omap_mux/sdmmc1_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/usbc1_icusb_dm
+    chmod 0664 /sys/kernel/debug/omap_mux/usbc1_icusb_dp
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_hsic_strobe
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_hsic_data
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat7
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat6
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat5
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat4
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat3
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat2
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat1
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dat0
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_nxt
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_dir
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_stp
+    chmod 0664 /sys/kernel/debug/omap_mux/usbb1_ulpitll_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/cam_globalreset
+    chmod 0664 /sys/kernel/debug/omap_mux/cam_strobe
+    chmod 0664 /sys/kernel/debug/omap_mux/cam_shutter
+    chmod 0664 /sys/kernel/debug/omap_mux/csi22_dy1
+    chmod 0664 /sys/kernel/debug/omap_mux/csi22_dx1
+    chmod 0664 /sys/kernel/debug/omap_mux/csi22_dy0
+    chmod 0664 /sys/kernel/debug/omap_mux/csi22_dx0
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dy4
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dx4
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dy3
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dx3
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dy2
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dx2
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dy1
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dx1
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dy0
+    chmod 0664 /sys/kernel/debug/omap_mux/csi21_dx0
+    chmod 0664 /sys/kernel/debug/omap_mux/hdmi_ddc_sda
+    chmod 0664 /sys/kernel/debug/omap_mux/hdmi_ddc_scl
+    chmod 0664 /sys/kernel/debug/omap_mux/hdmi_cec
+    chmod 0664 /sys/kernel/debug/omap_mux/hdmi_hpd
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs7
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs6
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs5
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs4
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_wait2
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_wait1
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_wait0
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_nbe1
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_nbe0_cle
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_nwe
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_noe
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_nadv_ale
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_clk
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_nwp
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs3
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs2
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs1
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ncs0
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a25
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a24
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a23
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a22
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a21
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a20
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a19
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a18
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a17
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_a16
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad15
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad14
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad13
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad12
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad11
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad10
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad9
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad8
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad7
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad6
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad5
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad4
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad3
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad2
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad1
+    chmod 0664 /sys/kernel/debug/omap_mux/gpmc_ad0
+
+    chmod 0664 /sys/devices/virtual/compass/akm8975/enable_acc
+    chmod 0664 /sys/devices/virtual/compass/akm8975/enable_mag
+    chmod 0664 /sys/devices/virtual/compass/akm8975/enable_ori
+    chmod 0664 /sys/devices/virtual/compass/akm8975/enable_gyr
+    chmod 0664 /sys/devices/virtual/compass/akm8975/delay_acc
+    chmod 0664 /sys/devices/virtual/compass/akm8975/delay_mag
+    chmod 0664 /sys/devices/virtual/compass/akm8975/delay_ori
+    chmod 0664 /sys/devices/virtual/compass/akm8975/delay_gyr
+
+    chown system system /sys/class/power_supply/smb137b/device/charge_state
+    chmod 0660 /sys/class/power_supply/smb137b/device/charge_state
+    chown system system /sys/class/power_supply/smb137b/device/limit_state
+    chmod 0660 /sys/class/power_supply/smb137b/device/limit_state
+
+    chown system system /sys/class/power_supply/smb137c/device/charge_state
+    chmod 0660 /sys/class/power_supply/smb137c/device/charge_state
+    chown system system /sys/class/power_supply/smb137c/device/limit_state
+    chmod 0660 /sys/class/power_supply/smb137c/device/limit_state
+
+    chown system system /sys/kernel/usb_otg_cont/power
+    chmod 0660 /sys/kernel/usb_otg_cont/power
+
+# Boost the CPU for 60 sec for boot optimization
+    write /sys/devices/system/cpu/cpufreq/hotplug/boost_timeout 60000000
+    write /sys/devices/system/cpu/cpu0/cpufreq/boost_cpufreq 1
+
+# We chown/chmod /data again so because mount is run as root + defaults
+    chown system system /data
+    chmod 0771 /data
+
+    chown media media /dev/syslink-proc4430
+    chown media media /dev/syslink-procmgr
+    chown media media /dev/syslink_ipc
+    chown media media /dev/omap-rproc0
+    chown media media /dev/omap-rproc1
+    chown media media /dev/omap-rproc2
+    chown media media /dev/iovmm-omap0
+    chown media media /dev/iovmm-omap1
+    chown media media /dev/omap-devh0
+    chown media media /dev/omap-devh1
+    chown media media /dev/omap-devh2
+
+    chmod 660 /dev/syslink-proc4430
+    chmod 660 /dev/syslink-procmgr
+    chmod 660 /dev/syslink_ipc
+    chmod 440 /dev/omap-rproc0
+    chmod 440 /dev/omap-rproc1
+    chmod 440 /dev/omap-rproc2
+    chmod 440 /dev/iovmm-omap0
+    chmod 440 /dev/iovmm-omap1
+    chmod 440 /dev/omap-devh0
+    chmod 440 /dev/omap-devh1
+    chmod 440 /dev/omap-devh2
+
+    chown media media /system/bin/syslink_daemon.out
+    chmod 750 /system/bin/syslink_daemon.out
+
+    # chown ST-Ericsson script to be used for root owner only
+    chmod 0700 /system/debug/start_lins_debug.sh
+    chmod 0700 /system/debug/stop_lins_debug.sh
+    chmod 0700 /system/bin/mfa
+    mkdir /ccpu
+    mkdir /ccpu/ste
+    mkdir /ccpu/ste/modem
+    mkdir /data/ste
+    mkdir /data/ste/modem
+    mkdir /data/ste/modem_fota
+
+    # change permissions for alsa nodes
+    chmod 0777  /dev/snd/pcmC0D0c
+    chmod 0777 /dev/snd/pcmC0D0p
+    chmod 0777  /dev/snd/controlC0
+    chmod 0777  /dev/snd/timer
+
+    #change permissions for alsa nodes for audio modem
+    chmod 0777 /dev/snd/pcmC0D5c
+    chmod 0777 /dev/snd/pcmC0D5p
+
+    #change permissions for alsa nodes for HDMI
+    chmod 777  /dev/snd/pcmC0D7p
+
+    # change permissions for modem
+    chmod 0660 /dev/ttyO3
+    chown radio radio /dev/ttyO3
+
+    chown system radio /ccpu/ste/modem
+    chmod 0750 /ccpu/ste/modem
+    chown system radio /ccpu/ste
+    chmod 0750 /ccpu/ste
+
+    chown system radio /ccpu1/ste/modem
+    chmod 0750 /ccpu1/ste/modem
+
+    chown system radio /data/ste/modem
+    chmod 0750 /data/ste/modem
+
+    chown system radio /data/ste/modem_fota
+    chmod 0750 /data/ste/modem_fota
+
+    # change permissions for Camera
+    chmod 0777 /dev/video4
+    chmod 0777 /dev/video0
+
+    # change permissions for Sensors
+    # chown system system /sys/bus/i2c/drivers/cma3000_accl/4-001c
+    # chown system system /sys/bus/i2c/drivers/cma3000_accl/4-001c/enable
+    # chown system system /sys/bus/i2c/drivers/cma3000_accl/4-001c/delay
+    # chown system system /sys/devices/platform/sfh7741.1
+    # chown system system /sys/devices/platform/sfh7741.1/state
+    # chown system system /sys/bus/i2c/drivers/bmp085/4-0077
+    # chown system system /sys/bus/i2c/drivers/bmp085/4-0077/enable
+    # chown system system /sys/bus/i2c/drivers/hmc5843/4-001e
+    # chown system system /sys/bus/i2c/drivers/hmc5843/4-001e/enable
+    # chown system system /sys/bus/i2c/drivers/hmc5843/4-001e/rate
+    chown system system /sys/devices/virtual/compass/akm8975/delay_gyr
+    chown system system /sys/devices/virtual/compass/akm8975/delay_ori
+    chown system system /sys/devices/virtual/compass/akm8975/delay_mag
+    chown system system /sys/devices/virtual/compass/akm8975/delay_acc
+    chown system system /sys/devices/virtual/compass/akm8975/enable_gyr
+    chown system system /sys/devices/virtual/compass/akm8975/enable_ori
+    chown system system /sys/devices/virtual/compass/akm8975/enable_mag
+    chown system system /sys/devices/virtual/compass/akm8975/enable_acc
+    chown system system /sys/devices/virtual/compass/akm8975/mountop
+
+    # change permissions for Overlay
+    chown system system /dev/video1
+    chown system system /dev/video2
+    chown system system /dev/video3
+    # change permissions for overlay managers and display devices
+    chown system system /sys/devices/platform/omapdss/display0/enabled
+    chown system system /sys/devices/platform/omapdss/display1/enabled
+    chown system system /sys/devices/platform/omapdss/display2/enabled
+    chown system system /sys/devices/platform/omapdss/display3/enabled
+    chown system system /sys/devices/platform/omapdss/display0/name
+    chown system system /sys/devices/platform/omapdss/display1/name
+    chown system system /sys/devices/platform/omapdss/display2/name
+    chown system system /sys/devices/platform/omapdss/display3/name
+    chown system system /sys/devices/platform/omapdss/overlay0/manager
+    chown system system /sys/devices/platform/omapdss/overlay1/manager
+    chown system system /sys/devices/platform/omapdss/overlay2/manager
+    chown system system /sys/devices/platform/omapdss/overlay3/manager
+    chown system system /sys/devices/platform/omapdss/overlay0/zorder
+    chown system system /sys/devices/platform/omapdss/overlay1/zorder
+    chown system system /sys/devices/platform/omapdss/overlay2/zorder
+    chown system system /sys/devices/platform/omapdss/overlay3/zorder
+    # change permissions for manager tranparency parameters
+    chown system system /sys/devices/platform/omapdss/manager0/name
+    chown system system /sys/devices/platform/omapdss/manager0/display
+    chown system system /sys/devices/platform/omapdss/manager1/name
+    chown system system /sys/devices/platform/omapdss/manager1/display
+    chown system system /sys/devices/platform/omapdss/manager2/name
+    chown system system /sys/devices/platform/omapdss/manager2/display
+    chown system system /sys/devices/platform/omapdss/overlay0/enabled
+    chown system system /sys/devices/platform/omapdss/overlay1/enabled
+    chown system system /sys/devices/platform/omapdss/overlay2/enabled
+    chown system system /sys/devices/platform/omapdss/overlay3/enabled
+    # change permissions for display timings to get the resolutions
+    chown system system /sys/devices/platform/omapdss/display0/timings
+    chown system system /sys/devices/platform/omapdss/display1/timings
+    chown system system /sys/devices/platform/omapdss/display2/timings
+    chown system system /sys/devices/platform/omapdss/display3/timings
+    chown system system /sys/devices/platform/omapdss/display2/code
+     # change permissions for Tiler driver
+    chown media media /dev/tiler
+    chmod 0660 /dev/tiler
+    chmod 0660 /dev/dmm
+# Enable secondary display on Blaze
+    #write /sys/devices/platform/omapdss/display1/enabled 1
+    #write /sys/devices/platform/omapdss/overlay1/enabled 0
+    #write /sys/devices/platform/omapdss/overlay1/manager "2lcd"
+    #write /sys/devices/platform/omapdss/overlay1/enabled 1
+
+# Revert the boost_timeout to the default value of 3 sec. Note this won't affect the prev boost
+# request for boot time reduction
+    write /sys/devices/system/cpu/cpufreq/hotplug/boost_timeout 3000000
+
+# Enable hotplug detection for HDMI
+    write /sys/devices/platform/omapdss/display2/hpd_enabled 1
+
+# Change permissions for FB overlays for HDMI UI Cloning
+    chown system system /sys/class/graphics/fb0/overlays
+    chown system system /sys/class/graphics/fb0/fit_to_screen
+    chown system system /sys/class/graphics/fb1/overlays
+
+# Enable UI-Cloning Service in SystemServer
+    setprop tv.hdmi.uicloning.enable true
+
+# Keypad permissions
+    chmod 0444 /system/usr/keychars/omap-keypad.kcm.bin
+    chmod 0444 /system/usr/keychars/qwerty.kcm.bin
+
+# SGX driver
+    chmod 0666 /dev/pvrsrvkm
+
+service cfgapp /system/bin/cfgapp
+    oneshot
+
+# TOMOYO S
+service ccs-auditd /system/bin/ccs-auditd
+    oneshot
+# TOMOYO E
+
+# Vritualization
+service vcryptd /system/bin/vcryptd
+    user root
+    group root
+
+# Initialize the SGX driver
+service pvrsrvinit /system/bin/pvrsrvinit
+#service pvrsrvinit /system/vendor/bin/pvrsrvinit
+    user root
+    group root
+    oneshot
+
+#Prepare IVA firmware
+service pre_IVA_firmware /system/bin/pre_IVA_firmware.sh
+    user root
+    group root
+    oneshot
+
+#Load IVA firmware
+service baseimage /system/bin/syslink_daemon.out -f /data/syslink/base_image_sys_m3.xem3 /data/syslink/base_image_app_m3.xem3
+    user media
+    group media
+    disabled
+
+on property:init.svc.pre_IVA_firmware=stopped
+    start baseimage
+
+service mid /system/bin/mid --cfg /system/etc/mid.conf
+    user root
+    group root
+    oneshot
+    enabled
+
+on property:sys.shutdown.requested=1
+    stop mid
+
+on property:sys.shutdown.requested=0
+    stop mid
+
+service rfm /system/bin/rfm-server -n5 -b -r /ccpu/ste/modem/Phone_FS -u system -g radio -l logcat -i rfm
+    user root
+    group root
+    oneshot
+    disabled
+
+service ril-daemon /system/bin/rild
+    socket rild stream 660 root radio
+    socket rild-debug stream 660 radio system
+    user root
+    group radio cache inet misc bluetooth
+    enabled
+
+# ITP proxy
+    service itp-proxy /system/bin/bridge_relay -i IP -p 5468 -m TTY -x /dev/ttyO3 -y 115200,n,8,1,off
+        user root
+        group radio
+        disabled
+
+# LiNS non-root enabler
+    service lins /system/bin/lins
+        user root
+        oneshot
+
+service uim /system/bin/uim-sysfs
+    user root
+    group media bluetooth
+    oneshot
+
+service hciattach /system/bin/hciattach -l
+    user root
+# changing user to root from bluetooth is a potential security issue
+# service hciattach_legacy is used instead of hciattach because, we dont
+# have nodes named ttyHS0
+    group bluetooth net_bt_admin misc
+    disabled
+    oneshot
+
+# WLAN Related services
+service wlan_loader /system/bin/wlan_loader \
+    -f /system/etc/wifi/firmware.bin -i /system/etc/wifi/tiwlan.ini -e /data/misc/wifi/nvs_map.bin
+     disabled
+     oneshot
+
+service wpa_supplicant /system/bin/wpa_supplicant -Dtiwlan0 -itiwlan0 -c/data/misc/wifi/wpa_supplicant.conf -dd
+    socket wpa_tiwlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service dhcpcd_tiwlan0 /system/bin/dhcpcd -B
+    disabled
+    oneshot
+
+service iprenew_tiwlan0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+# HotSpot Related services
+service wlan_ap_loader /system/bin/tiap_loader \
+    -f /system/etc/wifi/softap/firmware_ap.bin \
+    -i /system/etc/wifi/softap/tiwlan_ap.ini \
+    -e /data/misc/wifi/nvs_map.bin
+    disabled
+    oneshot
+
+service ifcfg_softap /system/bin/ifconfig tiap0 up
+    disabled
+    oneshot
+
+service hostapd /system/bin/hostap -dd /data/misc/wifi/hostapd.conf
+    disabled
+    oneshot
+
+service navl_server /system/bin/navl_server
+    disabled
+    oneshot
+
+# Panasonic FeliCa middle
+service felicamdl /system/bin/felicamdl
+    socket felica stream 660 root system
+
+on early-init
+# Panasonic mtdwrap_drv insmod
+    insmod /mtdwrap_drv.ko
+
+# Panasonic ddsync and cfgdrv insmod
+    insmod /ddsync.ko
+    insmod /cfgdrv.ko
+
+# Panasonic DTV
+    insmod /dtvtuner.ko
+#    device /dev/dtvtuner 0666 root system
+
+# Panasonic sdramdrv insmod
+    insmod /sdramdrv.ko
+
+# Panasonic FeliCa driver insmod
+    insmod /felica_ctrl.ko
+    insmod /felica_comm.ko
+    insmod /felica_rws.ko
+    insmod /felica_cfg.ko
+
+# AIC IrDA device driver insmod
+#    insmod /omap4_irda_serial.ko
+
+# Panasonic TouchSensor driver insmod
+    insmod /tsif.ko
+
+# Panasonic TouchPanel driver insmod
+#service tploader /system/bin/tploader.sh
+#    oneshot
+
+# Panasonic TouchSensor driver insmod
+#service tsloader /system/bin/tsloader.sh
+#    oneshot
+
+# syslogd start
+    service klogd /system/bin/klog.sh
+    oneshot
+
+# SMC
+service smc /vendorpa/etc/init.smc.sh
+    user root
+    group root
+    oneshot
+
+# Panasonic USBD driver insmod
+    service usbdin /system/bin/sh /usbdin.sh
+    oneshot
+
+service lifecycle /system/bin/lifecycle
+    disabled
+    oneshot
+

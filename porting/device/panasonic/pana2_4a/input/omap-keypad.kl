@@ -1,0 +1,8 @@
+# Physical keys from stock omap-keypad.kl; vendor emulation aliases omitted.
+key 102 HOME WAKE_DROPPED
+key 115 VOLUME_UP
+key 114 VOLUME_DOWN
+key 139 MENU
+key 158 BACK
+key 212 CAMERA WAKE
+key 528 FOCUS
