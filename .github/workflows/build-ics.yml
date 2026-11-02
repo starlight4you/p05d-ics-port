@@ -7,17 +7,12 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 360
+    container: ubuntu:14.04
     steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          df -h
-
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git curl python3 make gcc g++ openjdk-8-jdk \
+          apt-get update
+          apt-get install -y git curl python make gcc g++ openjdk-6-jdk \
             lib32z1 lib32ncurses5 lib32stdc++6 lib32bz2-1.0
 
       - name: Install repo
@@ -35,6 +30,7 @@ jobs:
 
       - name: Add device tree
         run: |
+          mkdir -p ~/aosp/device/panasonic
           cp -r $GITHUB_WORKSPACE/porting/device/panasonic/pana2_4a ~/aosp/device/panasonic/pana2_4a
 
       - name: Build
@@ -48,5 +44,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: systemimage
-          path: ~/aosp/out/target/product/pana2_4a/system.img
+          path: /root/aosp/out/target/product/pana2_4a/system.img
           if-no-files-found: ignore
