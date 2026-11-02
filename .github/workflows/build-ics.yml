@@ -7,29 +7,26 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 360
-    container: ubuntu:14.04
+    container: ubuntu:20.04
     steps:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y git curl python make gcc g++ openjdk-6-jdk \
+          apt-get install -y git curl python3 make gcc g++ openjdk-8-jdk \
             lib32z1 lib32ncurses5 lib32stdc++6 lib32bz2-1.0
 
-      - name: Install repo (Python 2 compatible)
+      - name: Install repo
         run: |
-          git clone https://gerrit.googlesource.com/git-repo /tmp/git-repo
-          cd /tmp/git-repo
-          git checkout v1.9.6
-          cp repo /usr/local/bin/repo
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
           chmod +x /usr/local/bin/repo
-          repo --version || true
+          repo --version
 
       - name: Sync AOSP
         run: |
           mkdir -p ~/aosp
           cd ~/aosp
-          repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b android-4.0.4_r2.1 --no-repo-verify
-          repo sync -j4
+          repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b android-4.0.4_r2.1 --no-clone-bundle --no-repo-verify
+          repo sync -j4 --no-clone-bundle
 
       - name: Add device tree
         run: |
